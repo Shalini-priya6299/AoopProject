@@ -1,5 +1,5 @@
 package tokenizer;
-import java.util.*;
+import java.util.*; 
 
 public class Tokenizer {
 	private String source;
@@ -24,12 +24,22 @@ public class Tokenizer {
 				position++;
 				continue;
 			}
-				
+<<<<<<< HEAD
+			
+=======
+
+>>>>>>> 584fad30d699cefb042b845b2eca8edff152f1e6
+			// Handles letter
 			if(Character.isLetter(curr)) {
 				tokens.add(readWord());
 				continue;
 			}
+<<<<<<< HEAD
 			
+=======
+
+>>>>>>> 584fad30d699cefb042b845b2eca8edff152f1e6
+			// Handles digit
 			if(Character.isDigit(curr)) {
 				tokens.add(readNumber());
 				continue;
