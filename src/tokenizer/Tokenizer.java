@@ -24,12 +24,14 @@ public class Tokenizer {
 				position++;
 				continue;
 			}
-				
+			
+			// Handles letter
 			if(Character.isLetter(curr)) {
 				tokens.add(readWord());
 				continue;
 			}
 			
+			// Handles digit
 			if(Character.isDigit(curr)) {
 				tokens.add(readNumber());
 				continue;
