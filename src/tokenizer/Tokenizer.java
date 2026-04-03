@@ -11,7 +11,7 @@ public class Tokenizer {
         this.source = source;
         this.position = 0;
         this.line = 1;
-        indentStack.push(0);
+        indentStack.push(0); // base indentation level
     }
     
     public List<Token> tokenize(){
@@ -20,7 +20,7 @@ public class Tokenizer {
         while(position < source.length()) {
             char curr = source.charAt(position);
             
-           // NEWLINE + INDENT/DEDENT handling
+            // NEWLINE, INDENT, DEDENT handling
             if(curr == '\n') {
                 tokens.add(new Token(TokenType.NEWLINE, "\\n", line));
                 line++;
@@ -28,28 +28,41 @@ public class Tokenizer {
 
                 int count = 0;
 
-                // count spaces after newline
-                while(position < source.length() && source.charAt(position) == ' ') {
+                // tabs not allowed
+                if (position < source.length() && source.charAt(position) == '\t') {
+                    throw new RuntimeException("Tabs not allowed for indentation at line " + line);
+                }
+
+                // count spaces
+                while (position < source.length() && source.charAt(position) == ' ') {
                     count++;
                     position++;
                 }
+
+                // multiple of 4 spaces as Indentation
+                if (count % 4 != 0) {
+                    throw new RuntimeException("Indentation must be multiple of 4 spaces at line " + line);
+                }
+
                 int prevIndent = indentStack.peek();
-                if(count > prevIndent) {
+                if (count > prevIndent) {
                     indentStack.push(count);
                     tokens.add(new Token(TokenType.INDENT, "", line));
                 } 
-                else if(count < prevIndent) {
-                    while(indentStack.size() > 1 && count < indentStack.peek()) {
+                else if (count < prevIndent) {
+                    while (indentStack.size() > 1 && count < indentStack.peek()) {
                         indentStack.pop();
                         tokens.add(new Token(TokenType.DEDENT, "", line));
                     }
-                    if(count != indentStack.peek()) {
+                    if (count != indentStack.peek()) {
                         throw new RuntimeException("Invalid indentation at line " + line);
                     }
                 }
                 continue;
             }
-            if(Character.isWhitespace(curr)) {
+
+            // skip spaces
+            if(curr == ' ') {
                 position++;
                 continue;
             }
@@ -86,53 +99,51 @@ public class Tokenizer {
                 case '/':
                     tokens.add(new Token(TokenType.DIVIDE, "/", line));
                     break;
-                case '>':
-                    tokens.add(new Token(TokenType.GREATER, ">", line));
-                    break;
-                case '<':
-                    tokens.add(new Token(TokenType.LESS, "<", line));
-                    break;
-                case '=':
-                    tokens.add(new Token(TokenType.EQUAL, "=", line));
-                    break;
                 default:
-                    throw new RuntimeException( "Unexpected character: '" + curr + "' at line " + line);
+                    throw new RuntimeException("Unexpected character: '" + curr + "' at line " + line);
             }
             position++;
         }
 
+        // Indents
         while(indentStack.size() > 1) {
             indentStack.pop();
             tokens.add(new Token(TokenType.DEDENT, "", line));
         }
+
         tokens.add(new Token(TokenType.EOF, "", line));
-        return List.copyOf(tokens);
+
+        return List.copyOf(tokens); // immutable output
     }
     
     private Token readWord() {
         int start = position;
+
         while(position < source.length() && Character.isLetter(source.charAt(position))) {
             position++;
         }
         
         String word = source.substring(start, position);
-        if (word.equals("is")) {
-            int tempPos = skipWhitespace(position);
 
-            // is greater than Handling
+        // Handle multi-word operators
+        if (word.equals("is")) {
+            int tempPos;
+
+            // is greater than
+            tempPos = skipWhitespace(position);
             if (matchPhrase(tempPos, "greater", "than")) {
                 position = moveAfterPhrase(tempPos, "greater", "than");
                 return new Token(TokenType.IS_GREATER_THAN, "is greater than", line);
             }
-            tempPos = skipWhitespace(position);
 
-            // Is less than Handling
+            // is less than
+            tempPos = skipWhitespace(position);
             if (matchPhrase(tempPos, "less", "than")) {
                 position = moveAfterPhrase(tempPos, "less", "than");
                 return new Token(TokenType.IS_LESS_THAN, "is less than", line);
             }
 
-            // Is equal Handling
+            // is equal to
             tempPos = skipWhitespace(position);
             if (matchPhrase(tempPos, "equal", "to")) {
                 position = moveAfterPhrase(tempPos, "equal", "to");
@@ -140,6 +151,7 @@ public class Tokenizer {
             }
         }
         
+        // keywords
         switch(word) {
             case "let":
                 return new Token(TokenType.LET, word, line);
@@ -161,7 +173,7 @@ public class Tokenizer {
     }
     
     private int skipWhitespace(int pos) {
-        while (pos < source.length() && Character.isWhitespace(source.charAt(pos))) {
+        while (pos < source.length() && source.charAt(pos) == ' ') {
             pos++;
         }
         return pos;
@@ -169,12 +181,19 @@ public class Tokenizer {
 
     private boolean matchPhrase(int pos, String word1, String word2) {
         if (!source.startsWith(word1, pos)) return false;
+
+        int end1 = pos + word1.length();
+        if (end1 < source.length() && source.charAt(end1) != ' ') return false;
+
         pos += word1.length();
         pos = skipWhitespace(pos);
-        if (!source.startsWith(word2, pos)) return false;
-        pos += word2.length();
 
-        return pos == source.length() || Character.isWhitespace(source.charAt(pos));
+        if (!source.startsWith(word2, pos)) return false;
+
+        int end2 = pos + word2.length();
+        if (end2 < source.length() && source.charAt(end2) != ' ') return false;
+        pos += word2.length();
+        return pos == source.length() || !Character.isLetterOrDigit(source.charAt(pos));
     }
 
     private int moveAfterPhrase(int pos, String word1, String word2) {
@@ -193,33 +212,31 @@ public class Tokenizer {
             
             if(Character.isDigit(c)) {
                 position++;
-            } else if(c == '.' && !hasDot) {
+            } 
+            else if(c == '.' && !hasDot) {
                 hasDot = true;
                 position++;
-            } else {
+            } 
+            else {
                 break;
             }
         }
-        
         String number = source.substring(start, position);
         return new Token(TokenType.NUMBER, number, line);
     }
     
     private Token readString() {
-        position++;
+        position++; 
         int start = position;
         
         while(position < source.length() && source.charAt(position) != '"') {
             position++;
         }
-        
         if(position >= source.length()) {
             throw new RuntimeException("Unterminated string at line " + line);
         }
-        
         String value = source.substring(start, position);
         position++;
-        
         return new Token(TokenType.STRING, value, line);
     }
 }
