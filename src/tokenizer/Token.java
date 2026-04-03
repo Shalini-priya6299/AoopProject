@@ -20,5 +20,8 @@ public class Token {
 	public int getLine() {
 		return line;
 	}
-
+	
+	public String toString() {
+		return type + "(" + value + ")";
+	}
 }

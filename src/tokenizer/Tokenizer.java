@@ -1,15 +1,17 @@
 package tokenizer;
-import java.util.*; 
+import java.util.*;
 
 public class Tokenizer {
     private String source;
     private int position;
     private int line;
+    private Stack<Integer> indentStack = new Stack<>();
     
     public Tokenizer(String source) {
         this.source = source;
         this.position = 0;
         this.line = 1;
+        indentStack.push(0);
     }
     
     public List<Token> tokenize(){
@@ -18,12 +20,33 @@ public class Tokenizer {
         while(position < source.length()) {
             char curr = source.charAt(position);
             
-            // Whitespace Handling
-            if(Character.isWhitespace(curr)) {
-                if(curr == '\n') {
-                    line++;
-                    tokens.add(new Token(TokenType.NEWLINE, "\n", line));
+           // NEWLINE + INDENT/DEDENT handling
+            if(curr == '\n') {
+                line++;
+                tokens.add(new Token(TokenType.NEWLINE, "\\n", line));
+                position++;
+
+                int count = 0;
+
+                // count spaces after newline
+                while(position < source.length() && source.charAt(position) == ' ') {
+                    count++;
+                    position++;
                 }
+                int prevIndent = indentStack.peek();
+                if(count > prevIndent) {
+                    indentStack.push(count);
+                    tokens.add(new Token(TokenType.INDENT, "", line));
+                } 
+                else if(count < prevIndent) {
+                    while(indentStack.size() > 0 && count < indentStack.peek()) {
+                        indentStack.pop();
+                        tokens.add(new Token(TokenType.DEDENT, "", line));
+                    }
+                }
+                continue;
+            }
+            if(Character.isWhitespace(curr)) {
                 position++;
                 continue;
             }
@@ -70,95 +93,47 @@ public class Tokenizer {
                     tokens.add(new Token(TokenType.EQUAL, "=", line));
                     break;
                 default:
-                    throw new RuntimeException("Unexpected character: " + curr);
+                    throw new RuntimeException( "Unexpected character: '" + curr + "' at line " + line);
             }
-            
             position++;
         }
-        
+
+        while(indentStack.size() > 1) {
+            indentStack.pop();
+            tokens.add(new Token(TokenType.DEDENT, "", line));
+        }
         tokens.add(new Token(TokenType.EOF, "", line));
         return tokens;
     }
     
     private Token readWord() {
         int start = position;
-        
         while(position < source.length() && Character.isLetter(source.charAt(position))) {
             position++;
         }
         
         String word = source.substring(start, position);
-        
-        // Special phrase handling
         if (word.equals("is")) {
+            int tempPos = skipWhitespace(position);
 
-            int tempPos = position;
+            // is greater than Handling
+            if (matchPhrase(tempPos, "greater", "than")) {
+                position = moveAfterPhrase(tempPos, "greater", "than");
+                return new Token(TokenType.IS_GREATER_THAN, "is greater than", line);
+            }
+            tempPos = skipWhitespace(position);
 
-            while (tempPos < source.length() && Character.isWhitespace(source.charAt(tempPos))) {
-                tempPos++;
+            // Is less than Handling
+            if (matchPhrase(tempPos, "less", "than")) {
+                position = moveAfterPhrase(tempPos, "less", "than");
+                return new Token(TokenType.IS_LESS_THAN, "is less than", line);
             }
 
-            if (tempPos < source.length() && source.startsWith("greater", tempPos)) {
-                tempPos += "greater".length();
-
-                while (tempPos < source.length() && Character.isWhitespace(source.charAt(tempPos))) {
-                    tempPos++;
-                }
-
-                if (tempPos < source.length() && source.startsWith("than", tempPos)) {
-                    tempPos += "than".length();
-
-                    if (tempPos == source.length() || Character.isWhitespace(source.charAt(tempPos))) {
-                        position = tempPos;
-                        return new Token(TokenType.IS_GREATER_THAN, "is greater than", line);
-                    }
-                }
-            }
-
-            tempPos = position;
-
-            while (tempPos < source.length() && Character.isWhitespace(source.charAt(tempPos))) {
-                tempPos++;
-            }
-
-            if (tempPos < source.length() && source.startsWith("less", tempPos)) {
-                tempPos += "less".length();
-
-                while (tempPos < source.length() && Character.isWhitespace(source.charAt(tempPos))) {
-                    tempPos++;
-                }
-
-                if (tempPos < source.length() && source.startsWith("than", tempPos)) {
-                    tempPos += "than".length();
-
-                    if (tempPos == source.length() || Character.isWhitespace(source.charAt(tempPos))) {
-                        position = tempPos;
-                        return new Token(TokenType.IS_LESS_THAN, "is less than", line);
-                    }
-                }
-            }
-
-            tempPos = position;
-
-            while (tempPos < source.length() && Character.isWhitespace(source.charAt(tempPos))) {
-                tempPos++;
-            }
-
-            if (tempPos < source.length() && source.startsWith("equal", tempPos)) {
-                tempPos += "equal".length();
-
-                while (tempPos < source.length() && Character.isWhitespace(source.charAt(tempPos))) {
-                    tempPos++;
-                }
-
-                if (tempPos < source.length() && source.startsWith("to", tempPos)) {
-                    tempPos += "to".length();
-
-                    if (tempPos == source.length() || Character.isWhitespace(source.charAt(tempPos))) {
-                        position = tempPos;
-                        return new Token(TokenType.IS_EQUAL, "is equal to", line);
-                    }
-                }
+            // Is equal Handling
+            tempPos = skipWhitespace(position);
+            if (matchPhrase(tempPos, "equal", "to")) {
+                position = moveAfterPhrase(tempPos, "equal", "to");
+                return new Token(TokenType.IS_EQUAL, "is equal to", line);
             }
         }
         
@@ -182,12 +157,45 @@ public class Tokenizer {
         }
     }
     
+    private int skipWhitespace(int pos) {
+        while (pos < source.length() && Character.isWhitespace(source.charAt(pos))) {
+            pos++;
+        }
+        return pos;
+    }
+
+    private boolean matchPhrase(int pos, String word1, String word2) {
+        if (!source.startsWith(word1, pos)) return false;
+        pos += word1.length();
+        pos = skipWhitespace(pos);
+        if (!source.startsWith(word2, pos)) return false;
+        pos += word2.length();
+
+        return pos == source.length() || Character.isWhitespace(source.charAt(pos));
+    }
+
+    private int moveAfterPhrase(int pos, String word1, String word2) {
+        pos += word1.length();
+        pos = skipWhitespace(pos);
+        pos += word2.length();
+        return pos;
+    }
+    
     private Token readNumber() {
         int start = position;
+        boolean hasDot = false;
         
-        while(position < source.length() &&
-              (Character.isDigit(source.charAt(position)) || source.charAt(position) == '.')) {
-            position++;
+        while(position < source.length()) {
+            char c = source.charAt(position);
+            
+            if(Character.isDigit(c)) {
+                position++;
+            } else if(c == '.' && !hasDot) {
+                hasDot = true;
+                position++;
+            } else {
+                break;
+            }
         }
         
         String number = source.substring(start, position);
@@ -200,6 +208,10 @@ public class Tokenizer {
         
         while(position < source.length() && source.charAt(position) != '"') {
             position++;
+        }
+        
+        if(position >= source.length()) {
+            throw new RuntimeException("Unterminated string at line " + line);
         }
         
         String value = source.substring(start, position);
