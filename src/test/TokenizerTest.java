@@ -1,4 +1,6 @@
-package tokenizer;
+package test;
+
+import tokenizer.*;
 import java.util.*;
 
 public class TokenizerTest {
