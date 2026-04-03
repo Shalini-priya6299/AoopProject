@@ -22,8 +22,8 @@ public class Tokenizer {
             
            // NEWLINE + INDENT/DEDENT handling
             if(curr == '\n') {
-                line++;
                 tokens.add(new Token(TokenType.NEWLINE, "\\n", line));
+                line++;
                 position++;
 
                 int count = 0;
@@ -39,9 +39,12 @@ public class Tokenizer {
                     tokens.add(new Token(TokenType.INDENT, "", line));
                 } 
                 else if(count < prevIndent) {
-                    while(indentStack.size() > 0 && count < indentStack.peek()) {
+                    while(indentStack.size() > 1 && count < indentStack.peek()) {
                         indentStack.pop();
                         tokens.add(new Token(TokenType.DEDENT, "", line));
+                    }
+                    if(count != indentStack.peek()) {
+                        throw new RuntimeException("Invalid indentation at line " + line);
                     }
                 }
                 continue;
@@ -103,7 +106,7 @@ public class Tokenizer {
             tokens.add(new Token(TokenType.DEDENT, "", line));
         }
         tokens.add(new Token(TokenType.EOF, "", line));
-        return tokens;
+        return List.copyOf(tokens);
     }
     
     private Token readWord() {
