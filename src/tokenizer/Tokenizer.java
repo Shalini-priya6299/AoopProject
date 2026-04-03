@@ -5,7 +5,7 @@ public class Tokenizer {
     private String source;
     private int position;
     private int line;
-    private Stack<Integer> indentStack = new Stack<>();
+    private Deque<Integer> indentStack = new ArrayDeque<>();
     
     public Tokenizer(String source) {
         this.source = source;
