@@ -1,7 +1,4 @@
 package parser;
-
-
-
 public final class VariableNode implements Expression{
     private final String variable;
     public VariableNode(String variable){

@@ -1,7 +1,5 @@
 package parser;
 
-
-
 public class BinaryOpNode implements Expression{
     private final Expression left;
     private final Expression right;
