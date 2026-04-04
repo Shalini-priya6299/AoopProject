@@ -1,6 +1,6 @@
 package parser;
 
-import evaluator.Environment;
+
 
 public final class StringNode implements Expression {
     private final String value;
