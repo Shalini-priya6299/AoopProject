@@ -2,7 +2,7 @@ package parser;
 
 import evaluator.Environment;
 
-public class NumberNode  implements Expression {
+public final class NumberNode  implements Expression {
     private final double value;
     public NumberNode(double value) {
         this.value = value;

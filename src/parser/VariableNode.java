@@ -2,7 +2,7 @@ package parser;
 
 import evaluator.Environment;
 
-public class VariableNode implements Expression{
+public final class VariableNode implements Expression{
     private final String variable;
     public VariableNode(String variable){
         this.variable = variable;
