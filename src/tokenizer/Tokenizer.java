@@ -21,30 +21,42 @@ public class Tokenizer {
             char curr = source.charAt(position);
             
             // NEWLINE, INDENT, DEDENT handling
-            if(curr == '\n') {
+          if(curr == '\n') {
                 tokens.add(new Token(TokenType.NEWLINE, "\\n", line));
                 line++;
                 position++;
 
+                // check blank line FIRST
+                int tempPos = position;
+                while (tempPos < source.length() && source.charAt(tempPos) == ' ') {
+                    tempPos++;
+                }
+
+                // if blank line -> skipping
+                if (tempPos < source.length() && source.charAt(tempPos) == '\n') {
+                    position = tempPos;
+                    continue;
+                }
+
+                // now count spaces
                 int count = 0;
 
-                // tabs not allowed
                 if (position < source.length() && source.charAt(position) == '\t') {
                     throw new RuntimeException("Tabs not allowed for indentation at line " + line);
                 }
 
-                // count spaces
                 while (position < source.length() && source.charAt(position) == ' ') {
                     count++;
                     position++;
                 }
 
-                // multiple of 4 spaces as Indentation
+                // validate indentation
                 if (count % 4 != 0) {
                     throw new RuntimeException("Indentation must be multiple of 4 spaces at line " + line);
                 }
 
                 int prevIndent = indentStack.peek();
+
                 if (count > prevIndent) {
                     indentStack.push(count);
                     tokens.add(new Token(TokenType.INDENT, "", line));
@@ -58,6 +70,7 @@ public class Tokenizer {
                         throw new RuntimeException("Invalid indentation at line " + line);
                     }
                 }
+
                 continue;
             }
 
@@ -68,7 +81,7 @@ public class Tokenizer {
             }
             
             // Words Handling
-            if(Character.isLetter(curr)) {
+            if(Character.isLetter(curr) || curr == '_') {
                 tokens.add(readWord());
                 continue;
             }
@@ -119,8 +132,14 @@ public class Tokenizer {
     private Token readWord() {
         int start = position;
 
-        while(position < source.length() && Character.isLetter(source.charAt(position))) {
-            position++;
+        while (position < source.length()) {
+            char c = source.charAt(position);
+
+            if (Character.isLetterOrDigit(c) || c == '_') {
+                position++;
+            } else {
+                break;
+            }
         }
         
         String word = source.substring(start, position);
@@ -226,17 +245,52 @@ public class Tokenizer {
     }
     
     private Token readString() {
-        position++; 
-        int start = position;
-        
-        while(position < source.length() && source.charAt(position) != '"') {
-            position++;
+        position++; // skip opening "
+
+        StringBuilder sb = new StringBuilder();
+
+        while (position < source.length()) {
+            char c = source.charAt(position);
+
+            if (c == '\\') {
+                // handle escape sequences
+                position++;
+
+                if (position >= source.length()) {
+                    throw new RuntimeException("Invalid escape at line " + line);
+                }
+
+                char next = source.charAt(position);
+
+                switch (next) {
+                    case '"':
+                        sb.append('"');
+                        break;
+                    case '\\':
+                        sb.append('\\');
+                        break;
+                    case 'n':
+                        sb.append('\n');
+                        break;
+                    case 't':
+                        sb.append('\t');
+                        break;
+                    default:
+                        throw new RuntimeException("Invalid escape: \\" + next + " at line " + line);
+                }
+
+                position++;
+            } 
+            else if (c == '"') {
+                position++; // closing quote
+                return new Token(TokenType.STRING, sb.toString(), line);
+            } 
+            else {
+                sb.append(c);
+                position++;
+            }
         }
-        if(position >= source.length()) {
-            throw new RuntimeException("Unterminated string at line " + line);
-        }
-        String value = source.substring(start, position);
-        position++;
-        return new Token(TokenType.STRING, value, line);
+
+        throw new RuntimeException("Unterminated string at line " + line);
     }
 }

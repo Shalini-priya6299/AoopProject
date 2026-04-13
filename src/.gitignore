@@ -1,3 +1,7 @@
+# compiled files
 *.class
-tokenizer/
+
+# build folders
 out/
+bin/
+target/
