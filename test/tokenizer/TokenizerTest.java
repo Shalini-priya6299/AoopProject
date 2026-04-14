@@ -3,7 +3,10 @@ import java.util.List;
 
 public class TokenizerTest {
     public static void main(String[] args){
-        String input = "if x_val is greater than 5\n    say \"hello \\\"world\\\"\"";
+        String input = "repeat 4 times\n" +
+               "    say \"hello\"\n" +
+               "\n" +
+               "    say 5";;
         System.out.println(input);
         Tokenizer t1 = new Tokenizer(input);
         List<Token> tokens = t1.tokenize();
