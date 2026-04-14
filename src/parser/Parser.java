@@ -1,4 +1,5 @@
 package parser;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,7 +89,7 @@ public class Parser {
      */
     private Instruction parseInstruction() {
         Token token = peek(); // look ahead without consuming
-
+        
         switch (token.type()) {
             case LET:    return parseAssign();
             case SAY:    return parsePrint();
@@ -96,7 +97,7 @@ public class Parser {
             case REPEAT: return parseRepeat();
             default:
                 throw new RuntimeException(
-                        "Unexpected token '" + token.value() +
+                        "Unexpected token '" + token +
                                 "' at line " + token.line() +
                                 ". Expected: let, say, if, or repeat."
                 );
@@ -548,13 +549,20 @@ public class Parser {
      * @throws RuntimeException if current token is neither NEWLINE nor EOF
      */
     private void consumeNewline() {
-        if (!check(TokenType.NEWLINE) && !isAtEnd()) {
+    // DEDENT appearing here means syntax error — statement must end with NEWLINE
+        if (check(TokenType.DEDENT)) {
             throw new RuntimeException(
-                    "Expected end of line at line " + peek().line() +
-                            " but got '" + peek().value() + "'"
+                "Expected newline after statement at line " + peek().line() +
+                        ", but found"+peek()
             );
         }
-        skipNewlines(); // consume all trailing newlines
+        if (!check(TokenType.NEWLINE) && !isAtEnd()) {
+            throw new RuntimeException(
+                "Expected end of line at line " + peek().line() +
+                        " but got '" + peek().value() + "'"
+            );
+        }
+        skipNewlines();
     }
 
     /**
