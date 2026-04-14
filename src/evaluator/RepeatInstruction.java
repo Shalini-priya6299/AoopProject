@@ -4,8 +4,6 @@ import java.util.List;
 
 /*
  * Handles loops
- * Example:
- * repeat 4 times
  */
 public class RepeatInstruction implements Instruction {
 
@@ -19,13 +17,11 @@ public class RepeatInstruction implements Instruction {
 
     @Override
     public void execute(Environment env) {
-
-        for(int i = 0; i < count; i++) {
-
-            for(Instruction instr : body) {
-                instr.execute(env);
+        Environment loopEnv = new Environment(env);  // NEW: Loop scope
+        for (int i = 0; i < count; i++) {
+            for (Instruction instr : body) {
+                instr.execute(loopEnv);
             }
-
         }
     }
 }

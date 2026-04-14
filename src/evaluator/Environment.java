@@ -3,31 +3,33 @@ package evaluator;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
- * Environment stores all variables during execution.
- * Every instruction shares the same Environment instance.
- */
 public class Environment {
+    private final Map<String, Object> variables = new HashMap<>();
+    private final Environment enclosing;
 
-    // variable name -> value
-    private Map<String, Object> variables = new HashMap<>();
+    public Environment() {
+        this.enclosing = null;
+    }
 
-    /*
-     * Store or update variable value
-     */
+    public Environment(Environment enclosing) {
+        this.enclosing = enclosing;
+    }
+
     public void set(String name, Object value) {
+        if (!variables.containsKey(name) && enclosing != null) {
+            enclosing.set(name, value);
+            return;
+        }
         variables.put(name, value);
     }
 
-    /*
-     * Retrieve variable value
-     */
     public Object get(String name) {
-
-        if(!variables.containsKey(name)) {
-            throw new RuntimeException("Variable not defined: " + name);
+        if (variables.containsKey(name)) {
+            return variables.get(name);
         }
-
-        return variables.get(name);
+        if (enclosing != null) {
+            return enclosing.get(name);
+        }
+        throw new RuntimeException("Variable not defined: " + name);
     }
 }

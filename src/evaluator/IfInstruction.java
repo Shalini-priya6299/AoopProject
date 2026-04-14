@@ -18,15 +18,17 @@ public class IfInstruction implements Instruction {
 
     @Override
     public void execute(Environment env) {
-
         Object result = condition.evaluate(env);
 
-        if(result instanceof Boolean && (Boolean) result) {
-
-            for(Instruction instr : body) {
-                instr.execute(env);
+        if (result instanceof Boolean && (Boolean) result) {
+            Environment localEnv = new Environment(env);  // NEW: Simple local scope
+            try {
+                for (Instruction instr : body) {
+                    instr.execute(localEnv);
+                }
+            } catch (RuntimeException e) {
+                throw e;
             }
-
         }
     }
 }
