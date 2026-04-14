@@ -1,4 +1,7 @@
 package parser;
+
+
+
 public final class NumberNode  implements Expression {
     private final double value;
     public NumberNode(double value) {

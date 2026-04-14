@@ -1,5 +1,7 @@
 package parser;
 
+
+
 public class BinaryOpNode implements Expression{
     private final Expression left;
     private final Expression right;
@@ -16,10 +18,14 @@ public class BinaryOpNode implements Expression{
 
         //Handling String operations
         if (leftVal instanceof String && rightVal instanceof String) {
-            if(op.equals("==")) {
+            if("==".equals(op)) {
             return leftVal.equals(rightVal);
-            }else if(op.equals("+")) {
+            }else if("+".equals(op)) {
                 return (String)leftVal + (String)rightVal;}
+            else{
+                throw new RuntimeException(
+                    "Unsupported String operation required: [+ , ==]  got "+op);
+            }
         }
         //Safety check before downcast
         if (!(leftVal instanceof Double) || !(rightVal instanceof Double)) {
@@ -39,7 +45,7 @@ public class BinaryOpNode implements Expression{
                 return l / r;
             case ">":  return l > r;
             case "<":  return l < r;
-            case "==": return l == r; // Floating point Issue for values like 0.1+0.2==0.3
+            case "==": return l==r; // Floating point Issue for values like 0.1+0.2==0.3
             default: throw new RuntimeException("Unknown op: " + op);
         }
     }
