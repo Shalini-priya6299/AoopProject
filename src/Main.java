@@ -1,34 +1,46 @@
-package src;  // Adjust to your package
 
-import evaluator.Evaluator;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        Evaluator evaluator = new Evaluator();
-        
-        System.out.println("=== Simple Interpreter REPL ===");
-        System.out.println("Enter code (or 'exit' to quit):");
-        
+
+        System.out.println("=== Simple Interpreter ===");
+        System.out.println("Enter your code. Press ENTER on empty line to execute.");
+        System.out.println("Type 'exit' to quit.\n");
+
         while (true) {
-            System.out.print("> ");
-            String input = scanner.nextLine().trim();
-            
-            if (input.equals("exit") || input.equals("quit")) {
-                break;
+            StringBuilder inputBuilder = new StringBuilder();
+
+            System.out.println("Enter code:");
+
+            while (true) {
+                String line = scanner.nextLine();
+
+                // Exit condition
+                if (line.equalsIgnoreCase("exit") || line.equalsIgnoreCase("quit")) {
+                    scanner.close();
+                    return;
+                }
+
+                // Empty line → stop input
+                if (line.trim().isEmpty()) {
+                    break;
+                }
+
+                inputBuilder.append(line).append("\n");
             }
-            
-            if (input.isEmpty()) continue;
-            
+
+            String input = inputBuilder.toString();
+
+            if (input.trim().isEmpty()) continue;
+
             try {
-                // PIPELINE: input → tokenize → parse → evaluate
                 Interpreter interpreter = new Interpreter(input);
                 interpreter.execute();
             } catch (Exception e) {
                 System.err.println("Error: " + e.getMessage());
             }
         }
-        scanner.close();
     }
 }

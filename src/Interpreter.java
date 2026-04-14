@@ -1,4 +1,3 @@
-package src;
 
 import tokenizer.Tokenizer;
 import tokenizer.Token;

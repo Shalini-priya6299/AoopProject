@@ -1,5 +1,14 @@
 package parser;
 
+import tokenizer.Token;
+import tokenizer.TokenType;
+
+import evaluator.Instruction;
+import evaluator.AssignInstruction;
+import evaluator.PrintInstruction;
+import evaluator.IfInstruction;
+import evaluator.RepeatInstruction;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,7 +99,7 @@ public class Parser {
     private Instruction parseInstruction() {
         Token token = peek(); // look ahead without consuming
         
-        switch (token.type()) {
+        switch (token.getType()) {
             case LET:    return parseAssign();
             case SAY:    return parsePrint();
             case IF:     return parseIf();
@@ -98,7 +107,7 @@ public class Parser {
             default:
                 throw new RuntimeException(
                         "Unexpected token '" + token +
-                                "' at line " + token.line() +
+                                "' at line " + token.getLine() +
                                 ". Expected: let, say, if, or repeat."
                 );
         }
@@ -136,7 +145,7 @@ public class Parser {
         consume(TokenType.BE);                      // eat 'be'
         Expression value = parseExpression();       // parse right hand side
         consumeNewline();                           // eat end of line (EOF is also fine)
-        return new AssignInstruction(name.value(), value);
+        return new AssignInstruction(name.getValue(), value);
     }
 
     /**
@@ -250,7 +259,7 @@ public class Parser {
 
         // parse as Double first (all numbers in pipeline are Double)
         // then cast to int — fractional repeat count is meaningless
-        int times = (int) Double.parseDouble(count.value());
+        int times = (int) Double.parseDouble(count.getValue());
         List<Instruction> body = parseBody();        // parse the indented block below
         return new RepeatInstruction(times, body);
     }
@@ -335,7 +344,7 @@ public class Parser {
 
         // keep consuming + and - building left-associative tree
         while (check(TokenType.PLUS) || check(TokenType.MINUS)) {
-            String op = advance().value();  // consume operator, get its symbol
+            String op = advance().getValue();  // consume operator, get its symbol
             Expression right = parseTerm(); // right side may contain * or /
             left = new BinaryOpNode(left, op, right);
         }
@@ -367,7 +376,7 @@ public class Parser {
 
         // keep consuming * and / building left-associative tree
         while (check(TokenType.MULTIPLY) || check(TokenType.DIVIDE)) {
-            String op = advance().value();     // consume operator, get its symbol
+            String op = advance().getValue();     // consume operator, get its symbol
             Expression right = parsePrimary(); // right side is always a single value
             left = new BinaryOpNode(left, op, right);
         }
@@ -400,19 +409,19 @@ public class Parser {
         if (check(TokenType.NUMBER)) {
             // tokenizer stores numbers as strings — parse to double here
             // all numbers in the pipeline are Double, never Integer
-            return new NumberNode(Double.parseDouble(advance().value()));
+            return new NumberNode(Double.parseDouble(advance().getValue()));
         }
         if (check(TokenType.STRING)) {
             // tokenizer already stripped surrounding quotes from string value
-            return new StringNode(advance().value());
+            return new StringNode(advance().getValue());
         }
         if (check(TokenType.IDENTIFIER)) {
             // store just the name — Environment.get() resolves the value at runtime
-            return new VariableNode(advance().value());
+            return new VariableNode(advance().getValue());
         }
         throw new RuntimeException(
                 "Expected a value (number, string, or variable name) " +
-                        "but got '" + peek().value() + "' at line " + peek().line()
+                        "but got '" + peek().getValue() + "' at line " + peek().getLine()
         );
     }
 
@@ -445,7 +454,7 @@ public class Parser {
         throw new RuntimeException(
                 "Expected a comparison operator " +
                         "(is greater than / is less than / is equal to) " +
-                        "at line " + peek().line()
+                        "at line " + peek().getLine()
         );
     }
 
@@ -506,8 +515,8 @@ public class Parser {
         if (check(type)) return advance();
         throw new RuntimeException(
                 "Expected " + type +
-                        " but got '" + peek().value() +
-                        "' at line " + peek().line()
+                        " but got '" + peek().getValue() +
+                        "' at line " + peek().getLine()
         );
     }
 
@@ -522,7 +531,7 @@ public class Parser {
      */
     private boolean check(TokenType type) {
         if (isAtEnd()) return false;
-        return peek().type() == type;
+        return peek().getType() == type;
     }
 
     /**
@@ -552,14 +561,14 @@ public class Parser {
     // DEDENT appearing here means syntax error — statement must end with NEWLINE
         if (check(TokenType.DEDENT)) {
             throw new RuntimeException(
-                "Expected newline after statement at line " + peek().line() +
+                "Expected newline after statement at line " + peek().getLine() +
                         ", but found"+peek()
             );
         }
         if (!check(TokenType.NEWLINE) && !isAtEnd()) {
             throw new RuntimeException(
-                "Expected end of line at line " + peek().line() +
-                        " but got '" + peek().value() + "'"
+                "Expected end of line at line " + peek().getLine() +
+                        " but got '" + peek().getValue() + "'"
             );
         }
         skipNewlines();
@@ -592,8 +601,8 @@ public class Parser {
         // case 2 — something other than NEWLINE after THEN/TIMES
         if (!check(TokenType.NEWLINE)) {
             throw new RuntimeException(
-                    "Expected new line at line " + peek().line() +
-                            " but got '" + peek().value() + "'"
+                    "Expected new line at line " + peek().getLine() +
+                            " but got '" + peek().getValue() + "'"
             );
         }
         skipNewlines(); // consume all newlines including blank lines
@@ -617,6 +626,6 @@ public class Parser {
      * @return true if current token is EOF
      */
     private boolean isAtEnd() {
-        return peek().type() == TokenType.EOF;
+        return peek().getType() == TokenType.EOF;
     }
 }
