@@ -1,0 +1,7 @@
+# compiled files
+*.class
+
+# build folders
+out/
+bin/
+target/
