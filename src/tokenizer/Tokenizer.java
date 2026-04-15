@@ -118,6 +118,10 @@ public class Tokenizer {
             position++;
         }
 
+        if (!tokens.isEmpty() && tokens.get(tokens.size() - 1).getType() != TokenType.NEWLINE) {
+            tokens.add(new Token(TokenType.NEWLINE, "\n", line));
+        }
+        
         // Indents
         while(indentStack.size() > 1) {
             indentStack.pop();
