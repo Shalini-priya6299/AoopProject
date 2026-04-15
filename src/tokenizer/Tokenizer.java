@@ -2,16 +2,18 @@ package tokenizer;
 import java.util.*;
 
 public class Tokenizer {
-    private String source;
+    private final String source;
     private int position;
     private int line;
     private Deque<Integer> indentStack = new ArrayDeque<>();
+    private final int tabWidth;
     
     public Tokenizer(String source) {
         this.source = source;
         this.position = 0;
         this.line = 1;
         indentStack.push(0); // base indentation level
+        this.tabWidth=4;
     }
     
     public List<Token> tokenize(){
@@ -42,21 +44,8 @@ public class Tokenizer {
                 boolean hasSpace = false;
                 boolean hasTab = false;
 
-                while (position < source.length()) {
-                    char ch = source.charAt(position);
-
-                    if (ch == ' ') {
-                        hasSpace = true;
-                        count++;
-                    } 
-                    else if (ch == '\t') {
-                        hasTab = true;
-                        count += 4;
-                    } 
-                    else {
-                        break;
-                    }
-
+                while (source.charAt(position) == '\t') {
+                    count+=tabWidth;
                     position++;
                 }
 

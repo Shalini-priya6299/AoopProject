@@ -22,13 +22,9 @@ public class IfInstruction implements Instruction {
 
         if (result instanceof Boolean && (Boolean) result) {
             Environment localEnv = new Environment(env);  // NEW: Simple local scope
-            try {
-                for (Instruction instr : body) {
-                    instr.execute(localEnv);
-                }
-            } catch (RuntimeException e) {
-                throw e;
+            for (Instruction instr : body) {
+                instr.execute(localEnv);
             }
+           
         }
     }
-}

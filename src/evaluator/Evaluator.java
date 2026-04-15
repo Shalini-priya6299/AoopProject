@@ -21,11 +21,5 @@ public class Evaluator {
         }
     }
 
-    public Object evaluate(Expression expr) {
-        return expr.evaluate(env);
-    }
-
-    public Environment getEnvironment() {
-        return env;
-    }
+    
 }
