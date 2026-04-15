@@ -38,16 +38,30 @@ public class Tokenizer {
                     continue;
                 }
 
-                // now count spaces
                 int count = 0;
+                boolean hasSpace = false;
+                boolean hasTab = false;
 
-                if (position < source.length() && source.charAt(position) == '\t') {
-                    throw new RuntimeException("Tabs not allowed for indentation at line " + line);
+                while (position < source.length()) {
+                    char ch = source.charAt(position);
+
+                    if (ch == ' ') {
+                        hasSpace = true;
+                        count++;
+                    } 
+                    else if (ch == '\t') {
+                        hasTab = true;
+                        count += 4;
+                    } 
+                    else {
+                        break;
+                    }
+
+                    position++;
                 }
 
-                while (position < source.length() && source.charAt(position) == ' ') {
-                    count++;
-                    position++;
+                if (hasSpace && hasTab) {
+                    throw new RuntimeException("Mixed tabs and spaces at line " + line);
                 }
 
                 // validate indentation
