@@ -48,6 +48,10 @@ public class Tokenizer {
                     count+=tabWidth;
                     position++;
                 }
+                while(source.charAt(position)==' '){
+                    count++;
+                    position++;
+                }
 
                 if (hasSpace && hasTab) {
                     throw new RuntimeException("Mixed tabs and spaces at line " + line);
